@@ -36,7 +36,8 @@ namespace HomeWork2_1_FromZheleznyak
         private static Timer _timer = new Timer();
         //Создаем переменную СтримВрайтер для ведение журнала
         private static StreamWriter f;
-        
+        private static int currentLevel;
+
         static Game()
         {
         }
@@ -47,7 +48,7 @@ namespace HomeWork2_1_FromZheleznyak
             _objs = new BaseObject[10];
             //_asteroids = new Asteroid[countOfAsteroids];
             _healths = new Health[3];
-            
+
             for (var i = 0; i < _objs.Length; i++)
             {
                 int r = rnd.Next(5, 50);
@@ -63,7 +64,7 @@ namespace HomeWork2_1_FromZheleznyak
                 {
                     Console.WriteLine($"{DateTime.Now} : Звезда за пределами экрана");
                 };
-                
+
             }
             //Создание астероидов
             for (var i = 0; i < countOfAsteroids; i++)
@@ -94,13 +95,14 @@ namespace HomeWork2_1_FromZheleznyak
             // Связываем буфер в памяти с графическим объектом, чтобы рисовать в буфере
             Buffer = _context.Allocate(g, new Rectangle(0, 0, Width, Height));
 
-            //Каждые 100 миллисекунд вызываем ТаймерТик()
-            _timer.Interval = 100;
+            //Каждые 50 миллисекунд вызываем ТаймерТик()
+            _timer.Interval = 50;
             _timer.Start();
             _timer.Tick += Timer_Tick;
 
             //Количество астероидов на первом уровне
             countOfAsteroids = 3;
+            currentLevel = 1;
 
             //Load();
             form.KeyDown += Form_KeyDown;
@@ -110,7 +112,7 @@ namespace HomeWork2_1_FromZheleznyak
             Ship.MessageUnderAttack += AttackLog;
 
             //Тоже самое для лечения
-            Ship.MessageAddEnergy += HealthLog;            
+            Ship.MessageAddEnergy += HealthLog;
 
             //В делегат добавляем ведение журнала ещё и в файл
 
@@ -146,7 +148,8 @@ namespace HomeWork2_1_FromZheleznyak
             if (_ship != null)
             {
                 Buffer.Graphics.DrawString("Energy:" + _ship.Energy, SystemFonts.DefaultFont, Brushes.White, 0, 0);
-                Buffer.Graphics.DrawString("Score:" + Asteroid.score, SystemFonts.DefaultFont, Brushes.White, 100, 0);
+                Buffer.Graphics.DrawString("Score:" + Asteroid.score, SystemFonts.DefaultFont, Brushes.White, 75, 0);
+                Buffer.Graphics.DrawString("Level:" + currentLevel, SystemFonts.DefaultFont, Brushes.White, 150, 0);
             }
             //Рендер буффера
             Buffer.Render();
@@ -175,7 +178,12 @@ namespace HomeWork2_1_FromZheleznyak
                         j--;
                     }
                 //Дополнительная проверка, так как астероид мог уничтожиться чуть выше
-                if (_asteroids[i] == null) continue;
+                if (_asteroids[i] == null)
+                {
+                    _asteroids.RemoveAt(i);
+                    i--;
+                    continue;
+                }
                 //Проверяем, не столкнулся ли астероид с кораблём
                 if (!_ship.Collision(_asteroids[i])) continue;
                 var rnd = new Random();
@@ -193,7 +201,7 @@ namespace HomeWork2_1_FromZheleznyak
                 var rnd = new Random();
                 //Лечим корабль
                 _ship?.EnergyAdd(_healths[i].power);
-                _healths[i] = null;                
+                _healths[i] = null;
             }
         }
 
@@ -203,9 +211,10 @@ namespace HomeWork2_1_FromZheleznyak
             Update();
             //Заканчиваем игру, если сбиты все астероиды
             //Временная заглушка для окончания игры
-            if (Asteroid.score == countOfAsteroids)
+            if (_asteroids.Count == 0)
             {
-                Finish();
+                //Finish();
+                NextLevel();
             }
         }
 
@@ -266,6 +275,16 @@ namespace HomeWork2_1_FromZheleznyak
         {
             //Выводим в файл, сколько корабль получил урона
             f.WriteLine($"{DateTime.Now} : Asteroid has been destroed");
+        }
+
+        public static void NextLevel()
+        {
+            Random r = new Random();
+            countOfAsteroids += r.Next(1+currentLevel/3,3+currentLevel/3);
+            currentLevel += 1;
+            Console.WriteLine($"{DateTime.Now} : LEVEL: {currentLevel}");
+            f.WriteLine($"{DateTime.Now} : LEVEL: {currentLevel}");
+            Load();
         }
     }
 }
