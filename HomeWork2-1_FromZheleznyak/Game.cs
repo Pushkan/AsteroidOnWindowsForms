@@ -36,7 +36,11 @@ namespace HomeWork2_1_FromZheleznyak
         private static Timer _timer = new Timer();
         //Создаем переменную СтримВрайтер для ведение журнала
         private static StreamWriter f;
+        //Текущий уровень
         private static int currentLevel;
+        //Длина карты, увеличивается с уровнем
+        private static int mapLenght;
+
 
         static Game()
         {
@@ -70,14 +74,16 @@ namespace HomeWork2_1_FromZheleznyak
             for (var i = 0; i < countOfAsteroids; i++)
             {
                 int r = rnd.Next(40, 90);
-                Asteroid newAsteroid = new Asteroid(new Point(Width, rnd.Next(0, Game.Height)), new Point(-r / 5, r), new Size(r, r));
+                int randomLenght = rnd.Next(Width, Width+mapLenght);
+                Asteroid newAsteroid = new Asteroid(new Point(randomLenght, rnd.Next(0, Game.Height)), new Point(-r / 5, r), new Size(r, r));
                 _asteroids.Add(newAsteroid);
             }
             //Создание аптечек
             for (var i = 0; i < _healths.Length; i++)
             {
                 int r = rnd.Next(30, 50);
-                _healths[i] = new Health(new Point(Width, rnd.Next(0, Game.Height)), new Point(-r / 5, r), new Size(r, r), r);
+                int randomLenght = rnd.Next(Width, Width + mapLenght);
+                _healths[i] = new Health(new Point(randomLenght, rnd.Next(0, Game.Height)), new Point(-r / 5, r), new Size(r, r), r);
             }
 
         }
@@ -103,6 +109,7 @@ namespace HomeWork2_1_FromZheleznyak
             //Количество астероидов на первом уровне
             countOfAsteroids = 3;
             currentLevel = 1;
+            mapLenght = 300;
 
             //Load();
             form.KeyDown += Form_KeyDown;
@@ -283,6 +290,8 @@ namespace HomeWork2_1_FromZheleznyak
             Random r = new Random();
             countOfAsteroids += r.Next(1+currentLevel/3,3+currentLevel/3);
             currentLevel += 1;
+            //Увеличиваем карту каждый раз на 80 единиц
+            mapLenght += 80;
             Console.WriteLine($"{DateTime.Now} : LEVEL: {currentLevel}");
             f.WriteLine($"{DateTime.Now} : LEVEL: {currentLevel}");
             Load();
