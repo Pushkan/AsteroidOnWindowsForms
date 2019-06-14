@@ -13,8 +13,8 @@ namespace HomeWork2_1_FromZheleznyak
         {
             Form form = new Form
             {
-                Width = Screen.PrimaryScreen.Bounds.Width,
-                Height = Screen.PrimaryScreen.Bounds.Height
+                Width = Screen.PrimaryScreen.Bounds.Width-300,
+                Height = Screen.PrimaryScreen.Bounds.Height-300
             };
             try
             {
@@ -23,7 +23,7 @@ namespace HomeWork2_1_FromZheleznyak
             }
             catch (ArgumentOutOfRangeException)
             {
-                Console.Write(@"Высота/Ширина не может быть больше 1000");
+                Console.WriteLine(@"Высота/Ширина не может быть больше 1000");
             }
             finally
             {

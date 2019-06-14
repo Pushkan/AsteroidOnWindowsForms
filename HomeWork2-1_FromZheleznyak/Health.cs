@@ -4,16 +4,14 @@ using System.Drawing;
 namespace HomeWork2_1_FromZheleznyak
 {
 
-    class Asteroid : BaseObject
+    class Health : BaseObject
     {
-        //Подсчет баллов за сбитые астероиды
-        public static int score = 0;
-
-        public static event Message MessageDie;
-        public Asteroid(Point pos, Point dir, Size size) : base(pos, dir, size)
+        public int power;
+        public Health(Point pos, Point dir, Size size, int _power) : base(pos, dir, size)
         {
+            power = _power;
             //Пропишем получение изображения лишь раз в конструкторе, чтобы не забивать память
-            baseImage = Image.FromFile("img/asteroid.png");
+            baseImage = Image.FromFile("img/health.png");
         }
         public override void Draw()
         {
@@ -28,10 +26,6 @@ namespace HomeWork2_1_FromZheleznyak
                 Pos.X = Game.Width;
                 Pos.Y = r.Next(0, Game.Height);
             }
-        }
-        public void Die()
-        {
-            MessageDie?.Invoke();
         }
     }
 

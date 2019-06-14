@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Windows.Forms;
 using System.Drawing;
+using System.IO;
+using System.Collections.Generic;
 
 namespace HomeWork2_1_FromZheleznyak
 {
@@ -21,26 +23,35 @@ namespace HomeWork2_1_FromZheleznyak
         // Ширина и высота игрового поля
         public static int Width { get; set; }
         public static int Height { get; set; }
+        private static int countOfAsteroids = 10;
         public static BaseObject[] _objs;
-        private static Bullet _bullet;
+        //private static Bullet _bullet;
+        private static List<Bullet> _bullets = new List<Bullet>();
         private static Asteroid[] _asteroids;
+        private static Health[] _healths;
+        //Создание корабля
+        private static Ship _ship = new Ship(new Point(10, 200), new Point(5, 5), new Size(45, 15));
+        //Объявляем таймертик, чтобы его можно было прописать в финише
+        private static Timer _timer = new Timer();
+        //Создаем переменную СтримВрайтер для ведение журнала
+        private static StreamWriter f;
+        
         static Game()
         {
         }
         public static void Load()
         {
             var rnd = new Random();
-            //Создаем 30 звезд, 1 пулю и 3 астероида
-            _objs = new BaseObject[30];
-            _bullet = new Bullet(new Point(0, rnd.Next(0, Height)), new Point(5, 0), new Size(4, 1));
-            _asteroids = new Asteroid[3];
+            //Создаем звезды и астероиды
+            _objs = new BaseObject[10];
+            _asteroids = new Asteroid[countOfAsteroids];
+            _healths = new Health[3];
             
             for (var i = 0; i < _objs.Length; i++)
             {
                 int r = rnd.Next(5, 50);
-                //Специально делаю рандом от -200, чтобы иногда вызывать исключение
-                int pointX = rnd.Next(-200, Game.Width);
-                int pointY = rnd.Next(-200, Game.Height);
+                int pointX = rnd.Next(0, Game.Width);
+                int pointY = rnd.Next(0, Game.Height);
                 try
                 {
                     //Создаем звёзды. Если они находятся за пределами экрана, тогда вызывает своё исключение
@@ -49,14 +60,21 @@ namespace HomeWork2_1_FromZheleznyak
                 }
                 catch (MyException)
                 {
-                    Console.WriteLine(@"Вызываем собственное исключение. Звезда за пределами экрана");
+                    Console.WriteLine($"{DateTime.Now} : Звезда за пределами экрана");
                 };
                 
             }
+            //Создание астероидов
             for (var i = 0; i < _asteroids.Length; i++)
             {
                 int r = rnd.Next(40, 90);
                 _asteroids[i] = new Asteroid(new Point(Width, rnd.Next(0, Game.Height)), new Point(-r / 5, r), new Size(r, r));
+            }
+            //Создание аптечек
+            for (var i = 0; i < _healths.Length; i++)
+            {
+                int r = rnd.Next(30, 50);
+                _healths[i] = new Health(new Point(Width, rnd.Next(0, Game.Height)), new Point(-r / 5, r), new Size(r, r), r);
             }
 
         }
@@ -75,49 +93,173 @@ namespace HomeWork2_1_FromZheleznyak
             Buffer = _context.Allocate(g, new Rectangle(0, 0, Width, Height));
 
             //Каждые 100 миллисекунд вызываем ТаймерТик()
-            Timer timer = new Timer { Interval = 100 };
-            timer.Start();
-            timer.Tick += Timer_Tick;
+            _timer.Interval = 100;
+            _timer.Start();
+            _timer.Tick += Timer_Tick;
             Load();
+            form.KeyDown += Form_KeyDown;
+            //В ивент МессейджДай добавляем метод Финиш
+            Ship.MessageDie += Finish;
+            //В делегат МессейджАндерАттак добавляем метод выведения урона в консоль
+            Ship.MessageUnderAttack += AttackLog;
+
+            //Тоже самое для лечения
+            Ship.MessageAddEnergy += HealthLog;            
+
+            //В делегат добавляем ведение журнала ещё и в файл
+
+            //Обозначим в файле начало игры
+            f = new StreamWriter("logs.txt", true);
+            f.WriteLine($"{DateTime.Now} : Game has been started");
+
+            Ship.MessageUnderAttack += AttackLogFile;
+            Ship.MessageAddEnergy += HealthLogFile;
+
+            //В ивент МессайджДай у астероида добавляем метод выведения надписи в консоль и файл
+            Asteroid.MessageDie += DieLog;
+            Asteroid.MessageDie += DieLogFile;
+            Asteroid.MessageDie += () => Asteroid.score++;
         }
         public static void Draw()
         {
-            //Закрашиваем в черный
+            //Очистка экрана
             Buffer.Graphics.Clear(Color.Black);
-            //Отрисовываем звёзды, астероиды, пулю
+            //Вывод звёзд
             foreach (BaseObject obj in _objs)
                 obj.Draw();
-            foreach (BaseObject obj in _asteroids)
-                obj.Draw();
-            _bullet.Draw();
+            //Вывод аптечек (переместил выше, чтобы не перекрывали астероиды)
+            foreach (Health h in _healths)
+                h?.Draw();
+            //Вывод Астероидов
+            foreach (Asteroid a in _asteroids)
+                a?.Draw();
+            //Вывод пули, корабля
+            foreach (Bullet b in _bullets) b?.Draw();
+            _ship?.Draw();
+            //Если есть корабль, выводим его энергию
+            if (_ship != null)
+            {
+                Buffer.Graphics.DrawString("Energy:" + _ship.Energy, SystemFonts.DefaultFont, Brushes.White, 0, 0);
+                Buffer.Graphics.DrawString("Score:" + Asteroid.score, SystemFonts.DefaultFont, Brushes.White, 100, 0);
+            }
+            //Рендер буффера
             Buffer.Render();
 
         }
         public static void Update()
         {
-
-            foreach (BaseObject obj in _objs)
-                obj.Update();
-            //Пишем, что это Астероиды, чтобы у нас был возможен вызов "Регенерейт". 
-            //Можно было проверять на тип, но в нашем случае это не имеет смысла, все объекты - астероиды
-            foreach (Asteroid obj in _asteroids)
+            //Апдейт каждой звезды
+            foreach (BaseObject obj in _objs) obj.Update();
+            //Апдейт каждого снаряда
+            foreach (Bullet b in _bullets) b?.Update();
+            //Апдейт каждого астероида
+            for (var i = 0; i < _asteroids.Length; i++)
             {
-                obj.Update();
-                //Проверяем столкновения
-                if (obj.Collision(_bullet))
-                {
-                    //При столкновении появляется в другом месте
-                    obj.Regenerate();
-                }
+                if (_asteroids[i] == null) continue;
+                _asteroids[i].Update();
+                //Проверяем, не столкнулась ли пуля с астероидом
+                for (int j = 0; j < _bullets.Count; j++)
+                    if (_bullets[j] != null && _asteroids[i] != null && _bullets[j].Collision(_asteroids[i]))
+                    {
+                        System.Media.SystemSounds.Hand.Play();
+                        //Вызываем ивенты смерти
+                        _asteroids[i].Die();
+                        _asteroids[i] = null;
+                        _bullets.RemoveAt(j);
+                        j--;
+                    }
+                //Дополнительная проверка, так как астероид мог уничтожиться чуть выше
+                if (_asteroids[i] == null) continue;
+                //Проверяем, не столкнулся ли астероид с кораблём
+                if (!_ship.Collision(_asteroids[i])) continue;
+                var rnd = new Random();
+                //Наносим урон кораблю
+                _ship?.EnergyLow(rnd.Next(1, 10));
+                System.Media.SystemSounds.Asterisk.Play();
+                //Проверяем, не ушла ли энергия корабля в ноль или меньше
+                if (_ship.Energy <= 0) _ship?.Die();
             }
-                
-            _bullet.Update();
+            for (int i = 0; i < _healths.Length; i++)
+            {
+                if (_healths[i] == null) continue;
+                _healths[i].Update();
+                if (!_ship.Collision(_healths[i])) continue;
+                var rnd = new Random();
+                //Лечим корабль
+                _ship?.EnergyAdd(_healths[i].power);
+                _healths[i] = null;                
+            }
         }
 
         private static void Timer_Tick(object sender, EventArgs e)
         {
             Draw();
             Update();
+            //Заканчиваем игру, если сбиты все астероиды
+            //Временная заглушка для окончания игры
+            if (Asteroid.score == countOfAsteroids)
+            {
+                Finish();
+            }
+        }
+
+
+        private static void Form_KeyDown(object sender, KeyEventArgs e)
+        {
+            //При нажатии клавиш назначаем события
+            //Переделал создание снаряда так, чтобы он вылетал из середины корабля
+            if (e.KeyCode == Keys.ControlKey) _bullets.Add(new Bullet(new Point(_ship.Rect.X + _ship.Rect.Width / 2, _ship.Rect.Y + _ship.Rect.Height), new Point(20, 0), new Size(4, 1)));
+            if (e.KeyCode == Keys.Up) _ship.Up();
+            if (e.KeyCode == Keys.Down) _ship.Down();
+        }
+
+
+        public static void Finish()
+        {
+            _timer.Stop();
+            //Добавил ещё одну отрисовку, чтобы было понятно, что энергия корабля ушла в минус
+            Draw();
+            Buffer.Graphics.DrawString("The End", new Font(FontFamily.GenericSansSerif, 60, FontStyle.Underline), Brushes.White, 200, 100);
+            Buffer.Render();
+            //Закрываем файл, чтобы сохранить логи
+            f.WriteLine($"{DateTime.Now} : Game ended!");
+            f.Close();
+        }
+
+        private static void AttackLog(int damage)
+        {
+            //Выводим в консоль, сколько корабль получил урона
+            Console.WriteLine($"{DateTime.Now} : Ship under attack (-{damage})");
+        }
+
+        private static void HealthLog(int damage)
+        {
+            //Выводим в консоль, на сколько полечился корабль
+            Console.WriteLine($"{DateTime.Now} : Ship healed (+{damage})");
+        }
+
+        private static void AttackLogFile(int damage)
+        {
+            //Выводим в файл, сколько корабль получил урона
+            f.WriteLine($"{DateTime.Now} : Ship under attack (-{damage})");
+        }
+
+        private static void HealthLogFile(int damage)
+        {
+            //Выводим в файл, на сколько полечился корабль
+            f.WriteLine($"{DateTime.Now} : Ship healed (+{damage})");
+        }
+
+        private static void DieLog()
+        {
+            //Выводим в консоль, сколько корабль получил урона
+            Console.WriteLine($"{DateTime.Now} : Asteroid has been destroed");
+        }
+
+        private static void DieLogFile()
+        {
+            //Выводим в файл, сколько корабль получил урона
+            f.WriteLine($"{DateTime.Now} : Asteroid has been destroed");
         }
     }
 }

@@ -7,7 +7,7 @@ namespace HomeWork2_1_FromZheleznyak
     {
         public Star(Point pos, Point dir, Size size) : base(pos, dir, size)
         {
-            baseImage = Image.FromFile("pluto.png");
+            baseImage = Image.FromFile("img/pluto.png");
         }     
         //Так как у нас абстрактная фунция, её обязательно нужно прописать
         public override void Draw()

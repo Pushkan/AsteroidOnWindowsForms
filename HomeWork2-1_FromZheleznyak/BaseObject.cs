@@ -9,6 +9,7 @@ namespace HomeWork2_1_FromZheleznyak
         protected Point Dir;
         protected Size Size;       
         protected Image baseImage;
+        public delegate void Message();
 
         protected BaseObject(Point pos, Point dir, Size size)
         {
