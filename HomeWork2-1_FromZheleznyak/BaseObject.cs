@@ -1,36 +1,30 @@
 ﻿using System;
-using System.IO;
 using System.Drawing;
 
 namespace HomeWork2_1_FromZheleznyak
 {
-    class BaseObject
+    abstract class BaseObject:ICollision
     {
         protected Point Pos;
         protected Point Dir;
-        protected Size Size;
-        public BaseObject(Point pos, Point dir, Size size)
+        protected Size Size;       
+        protected Image baseImage;
+
+        protected BaseObject(Point pos, Point dir, Size size)
         {
+            //Стандартный конструктор для создания BaseObject
             Pos = pos;
             Dir = dir;
             Size = size;
         }
-        //Для получения изображения свинюшки подключаем System.IO, создаем переменную типа Image, получаем её
-        Image baseImage = Image.FromFile("pig.png");
-        public virtual void Draw()
-        {
-            //Game.Buffer.Graphics.DrawEllipse(Pens.White, Pos.X, Pos.Y, Size.Width, Size.Height);            
-            //Выводим свинюшку в заданную позицию
-            Game.Buffer.Graphics.DrawImage(baseImage, Pos);
-        }
-        public virtual void Update()
-        {
-            Pos.X = Pos.X + Dir.X;
-            Pos.Y = Pos.Y + Dir.Y;
-            if (Pos.X < 0) Dir.X = -Dir.X;
-            if (Pos.X > Game.Width) Dir.X = -Dir.X;
-            if (Pos.Y < 0) Dir.Y = -Dir.Y;
-            if (Pos.Y > Game.Height) Dir.Y = -Dir.Y;
-        }
+        //Прописываем абстрактные функции для обязательного переопределения их в производных классах
+        public abstract void Draw();
+
+        public abstract void Update();
+        //Подключаем коллизию
+        public bool Collision(ICollision o) => o.Rect.IntersectsWith(this.Rect);
+
+        public Rectangle Rect => new Rectangle(Pos, Size);
+
     }
 }

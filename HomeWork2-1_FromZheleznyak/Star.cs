@@ -7,21 +7,18 @@ namespace HomeWork2_1_FromZheleznyak
     {
         public Star(Point pos, Point dir, Size size) : base(pos, dir, size)
         {
-        }
-        Image baseImage = Image.FromFile("octopus.png");
+            baseImage = Image.FromFile("pluto.png");
+        }     
+        //Так как у нас абстрактная фунция, её обязательно нужно прописать
         public override void Draw()
         {
-            Game.Buffer.Graphics.DrawImage(baseImage, Pos);
+            Game.Buffer.Graphics.DrawImage(baseImage, Pos.X, Pos.Y, 20, 20);
         }
-
-    public override void Update()
+        //Если звезда долетает до конца экрана, то перемещаем её в конец
+        public override void Update()
         {
-            Pos.X = Pos.X - Dir.X;
-            Pos.Y = Pos.Y - Dir.Y;
-            if (Pos.X < 0) Dir.X = -Dir.X;
-            if (Pos.X > Game.Width) Dir.X = -Dir.X;
-            if (Pos.Y < 0) Dir.Y = -Dir.Y;
-            if (Pos.Y > Game.Height) Dir.Y = -Dir.Y;
+            Pos.X = Pos.X + Dir.X;         
+            if (Pos.X < 0) Pos.X = Game.Width;
         }
 
     }

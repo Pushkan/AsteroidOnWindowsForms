@@ -11,14 +11,29 @@ namespace HomeWork2_1_FromZheleznyak
     {
         static void Main(string[] args)
         {
-            Form form = new Form();
-            form.Width = 800;
-            form.Height = 600;
-            Game.Init(form);
-            form.Show();
-            Game.Draw();
-            Application.Run(form);
-
+            Form form = new Form
+            {
+                Width = Screen.PrimaryScreen.Bounds.Width,
+                Height = Screen.PrimaryScreen.Bounds.Height
+            };
+            try
+            {
+                //Вызов исключения АутОфРейндж
+                if (form.Width > 1000 || form.Height > 1000 || form.Width < 0 || form.Height < 0) throw new ArgumentOutOfRangeException();                                
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                Console.Write(@"Высота/Ширина не может быть больше 1000");
+            }
+            finally
+            {
+                //Выносить это в Файнали нет никакого смысла. Просто показываю, что я знаю о существовании "файнали" =D
+                Game.Init(form);
+                form.Show();
+                Game.Load();
+                Game.Draw();
+                Application.Run(form);
+            };
         }
     }
 }
