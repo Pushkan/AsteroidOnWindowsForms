@@ -106,10 +106,11 @@ namespace HomeWork2_1_FromZheleznyak
 
             //Load();
             form.KeyDown += Form_KeyDown;
-            //В ивент МессейджДай добавляем метод Финиш
-            Ship.MessageDie += Finish;
             //В делегат МессейджАндерАттак добавляем метод выведения урона в консоль
             Ship.MessageUnderAttack += AttackLog;
+            //В ивент МессейджДай добавляем метод Финиш
+            Ship.MessageDie += Finish;
+            
 
             //Тоже самое для лечения
             Ship.MessageAddEnergy += HealthLog;
