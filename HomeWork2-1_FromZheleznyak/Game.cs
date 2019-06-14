@@ -23,14 +23,15 @@ namespace HomeWork2_1_FromZheleznyak
         // Ширина и высота игрового поля
         public static int Width { get; set; }
         public static int Height { get; set; }
-        private static int countOfAsteroids = 10;
+        private static int countOfAsteroids;
         public static BaseObject[] _objs;
         //private static Bullet _bullet;
         private static List<Bullet> _bullets = new List<Bullet>();
-        private static Asteroid[] _asteroids;
+        //private static Asteroid[] _asteroids;
+        private static List<Asteroid> _asteroids = new List<Asteroid>();
         private static Health[] _healths;
         //Создание корабля
-        private static Ship _ship = new Ship(new Point(10, 200), new Point(5, 5), new Size(45, 15));
+        private static Ship _ship = new Ship(new Point(10, 200), new Point(10, 5), new Size(45, 15));
         //Объявляем таймертик, чтобы его можно было прописать в финише
         private static Timer _timer = new Timer();
         //Создаем переменную СтримВрайтер для ведение журнала
@@ -44,7 +45,7 @@ namespace HomeWork2_1_FromZheleznyak
             var rnd = new Random();
             //Создаем звезды и астероиды
             _objs = new BaseObject[10];
-            _asteroids = new Asteroid[countOfAsteroids];
+            //_asteroids = new Asteroid[countOfAsteroids];
             _healths = new Health[3];
             
             for (var i = 0; i < _objs.Length; i++)
@@ -65,10 +66,11 @@ namespace HomeWork2_1_FromZheleznyak
                 
             }
             //Создание астероидов
-            for (var i = 0; i < _asteroids.Length; i++)
+            for (var i = 0; i < countOfAsteroids; i++)
             {
                 int r = rnd.Next(40, 90);
-                _asteroids[i] = new Asteroid(new Point(Width, rnd.Next(0, Game.Height)), new Point(-r / 5, r), new Size(r, r));
+                Asteroid newAsteroid = new Asteroid(new Point(Width, rnd.Next(0, Game.Height)), new Point(-r / 5, r), new Size(r, r));
+                _asteroids.Add(newAsteroid);
             }
             //Создание аптечек
             for (var i = 0; i < _healths.Length; i++)
@@ -96,7 +98,11 @@ namespace HomeWork2_1_FromZheleznyak
             _timer.Interval = 100;
             _timer.Start();
             _timer.Tick += Timer_Tick;
-            Load();
+
+            //Количество астероидов на первом уровне
+            countOfAsteroids = 3;
+
+            //Load();
             form.KeyDown += Form_KeyDown;
             //В ивент МессейджДай добавляем метод Финиш
             Ship.MessageDie += Finish;
@@ -153,7 +159,7 @@ namespace HomeWork2_1_FromZheleznyak
             //Апдейт каждого снаряда
             foreach (Bullet b in _bullets) b?.Update();
             //Апдейт каждого астероида
-            for (var i = 0; i < _asteroids.Length; i++)
+            for (var i = 0; i < _asteroids.Count; i++)
             {
                 if (_asteroids[i] == null) continue;
                 _asteroids[i].Update();
