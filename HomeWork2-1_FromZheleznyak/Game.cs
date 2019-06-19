@@ -25,9 +25,7 @@ namespace HomeWork2_1_FromZheleznyak
         public static int Height { get; set; }
         private static int countOfAsteroids;
         public static BaseObject[] _objs;
-        //private static Bullet _bullet;
         private static List<Bullet> _bullets = new List<Bullet>();
-        //private static Asteroid[] _asteroids;
         private static List<Asteroid> _asteroids = new List<Asteroid>();
         private static Health[] _healths;
         //Создание корабля
@@ -50,7 +48,6 @@ namespace HomeWork2_1_FromZheleznyak
             var rnd = new Random();
             //Создаем звезды и астероиды
             _objs = new BaseObject[10];
-            //_asteroids = new Asteroid[countOfAsteroids];
             _healths = new Health[3];
 
             for (var i = 0; i < _objs.Length; i++)
@@ -111,7 +108,6 @@ namespace HomeWork2_1_FromZheleznyak
             currentLevel = 1;
             mapLenght = 300;
 
-            //Load();
             form.KeyDown += Form_KeyDown;
             //В делегат МессейджАндерАттак добавляем метод выведения урона в консоль
             Ship.MessageUnderAttack += AttackLog;
@@ -221,7 +217,6 @@ namespace HomeWork2_1_FromZheleznyak
             //Временная заглушка для окончания игры
             if (_asteroids.Count == 0)
             {
-                //Finish();
                 NextLevel();
             }
         }
@@ -234,6 +229,8 @@ namespace HomeWork2_1_FromZheleznyak
             if (e.KeyCode == Keys.ControlKey) _bullets.Add(new Bullet(new Point(_ship.Rect.X + _ship.Rect.Width / 2, _ship.Rect.Y + _ship.Rect.Height), new Point(20, 0), new Size(4, 1)));
             if (e.KeyCode == Keys.Up) _ship.Up();
             if (e.KeyCode == Keys.Down) _ship.Down();
+            //Для отладки сделал переход на следующий уровень
+            if (e.KeyCode == Keys.M) NextLevel();
         }
 
 
@@ -294,6 +291,13 @@ namespace HomeWork2_1_FromZheleznyak
             mapLenght += 80;
             Console.WriteLine($"{DateTime.Now} : LEVEL: {currentLevel}");
             f.WriteLine($"{DateTime.Now} : LEVEL: {currentLevel}");
+
+            _asteroids.Clear();
+            _healths = null;
+            _objs = null;
+
+            //Добавил очистку мусора, чтобы не забивать память
+            System.GC.Collect();
             Load();
         }
     }
